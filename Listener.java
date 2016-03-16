@@ -1,3 +1,6 @@
+// Listens to  a stream.  When a status (message) is recieved, adds the raw
+// JSON data to the specified mongoDB database.
+
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -7,26 +10,30 @@ import twitter4j.StatusListener;
 import twitter4j.StatusDeletionNotice;
 import twitter4j.TwitterObjectFactory;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoException;
+import com.mongodb.util.JSON;
+
 class Listener implements StatusListener
 {
-  private FileOutputStream out;
+  private String dbName = "stream";
+  private String collName = "statuses";
   
   public Listener()
   {
     try {
-      out = new FileOutputStream(new File("stream.json"), true);
+      mongoClient = new MongoClient( "localhost" , 27017 );
     } catch (Exception e) {
       e.printStackTrace();
     }
-  }
-  
-  public void shutdown()
-  {
-    try {
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+    
+    DB db = mongoClient.getDB(dbName);
+    DBCollection coll = db.getCollection(collName);
   }
   
   @Override
@@ -36,11 +43,10 @@ class Listener implements StatusListener
 
     System.out.println("timestamp : " + 
                         String.valueOf(status.getCreatedAt().getTime()));
-    try {
-      out.write(TwitterObjectFactory.getRawJSON(status).getBytes());
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+                      
+    DBObject obj = (DBObject)JSON.parse
+                   (TwitterObjectFactory.getRawJSON(status));
+    coll.insert(obj);
   }
     
   @Override
