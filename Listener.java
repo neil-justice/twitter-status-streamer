@@ -1,8 +1,6 @@
-// Listens to  a stream.  When a status (message) is recieved, adds the raw
-// JSON data to the specified mongoDB database.
-
-import java.io.File;
-import java.io.FileOutputStream;
+/* Listens to  a stream.  When a status (message) is recieved, adds the raw   
+ * JSON data to the specified mongoDB database. 
+ */
 
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -21,6 +19,9 @@ import com.mongodb.util.JSON;
 
 class Listener implements StatusListener
 {
+  private MongoClient mongoClient;
+  private DB db;
+  private DBCollection coll;
   private String dbName = "stream";
   private String collName = "statuses";
   
@@ -32,20 +33,22 @@ class Listener implements StatusListener
       e.printStackTrace();
     }
     
-    DB db = mongoClient.getDB(dbName);
-    DBCollection coll = db.getCollection(collName);
+    db = mongoClient.getDB(dbName);
+    coll = db.getCollection(collName);
   }
   
   @Override
   public void onStatus(Status status) 
   {
-    System.out.println(status.getUser().getScreenName() + ": " + status.getText());
+    System.out.println("Tweet from: " + status.getUser().getScreenName() + 
+                       "Downloaded.");
 
-    System.out.println("timestamp : " + 
+    System.out.println("Timestamp: " + 
                         String.valueOf(status.getCreatedAt().getTime()));
                       
     DBObject obj = (DBObject)JSON.parse
                    (TwitterObjectFactory.getRawJSON(status));
+    
     coll.insert(obj);
   }
     

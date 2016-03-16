@@ -1,6 +1,8 @@
-/* Twitter streamer using twitter4j.
-
-*/
+/*  Interfaces with the Twitter streaming API using the twitter4j library.  see
+ *  https://dev.twitter.com/streaming/reference/post/statuses/filter
+ *  for more info on the connection.  Tweets are sent directly to a mongoDB
+ *  database as JSON objects.
+ */
 
 import java.util.Properties;
 import java.io.FileInputStream;
