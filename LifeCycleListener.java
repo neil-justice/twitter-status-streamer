@@ -3,9 +3,7 @@ import twitter4j.ConnectionLifeCycleListener;
 class LifeCycleListener implements ConnectionLifeCycleListener
 {
   @Override 
-  public void onConnect() { 
-    System.out.println("Opening connection");
-  } 
+  public void onConnect() {}
 
   @Override 
   public void onDisconnect() { 

@@ -1,3 +1,7 @@
+/* Twitter streamer using twitter4j.
+
+*/
+
 import java.util.Properties;
 import java.io.FileInputStream;
 
@@ -43,14 +47,18 @@ class Streamer
 
   private FilterQuery setFilter()
   {
-    String keywordString = prop.getProperty("TWITTER_KEYWORDS");
-    String[] keywords = keywordString.split(",");
+    String[] s =  { "Nazi","Ukraine","Whatsapp","Trump","Clinton","Fascist",
+                    "Bernie","Hillary","Rubio","Cruz","President",
+                    "Russia","Syria","Obama","Cameron","Merkel","Bitcoin",
+                    "Refugee","Migrant","Refugees", "Migrants","Facebook"
+                  };
     
-    for (String s: keywords) {
-      s = s.trim();
-    }
+    FilterQuery q = new FilterQuery();
+
+    q.language("en");
+    q.track(s);
     
-    return new FilterQuery().track(keywords);
+    return q;
   }
   
   public void open() 
