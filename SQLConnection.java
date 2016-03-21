@@ -9,6 +9,7 @@ public class SQLConnection implements AutoCloseable
 {
   static final String CONNECTION = "jdbc:sqlite:statuses.db";
   private Connection c;
+  private int nonUnique = 0;
 
   public void open()
   {
@@ -51,6 +52,8 @@ public class SQLConnection implements AutoCloseable
   {
     try {
       c.commit();
+      System.out.println("" + nonUnique + "non-unique users");
+      nonUnique = 0;
     } catch (SQLException e) {
       System.out.println(e.getMessage());
     }
@@ -87,8 +90,8 @@ public class SQLConnection implements AutoCloseable
       s.setString(2, name);
 
       s.execute();
-    } catch (Exception e) {
-        System.out.println("User already in db.");
+    } catch (SQLException e) {
+      nonUnique++;
     }
   }
 }
