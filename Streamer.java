@@ -17,16 +17,16 @@ import twitter4j.StatusListener;
 import twitter4j.ConnectionLifeCycleListener;
 
 class Streamer
-{  
+{
   private TwitterStream twitterStream;
 	private Properties prop = new Properties();
-  
+
   public static void main(String[] args)
   {
     Streamer s = new Streamer();
     s.open();
   }
-  
+
   //loads properties for the Configuration object from a properties file
   public Streamer()
   {
@@ -41,7 +41,7 @@ class Streamer
 			cb.setJSONStoreEnabled(true);
 
 			twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
-      
+
     } catch (Exception e) {
 			e.printStackTrace();
     }
@@ -52,26 +52,26 @@ class Streamer
     String[] s =  { "Nazi","Ukraine","Whatsapp","Trump","Clinton","Fascist",
                     "Bernie","Hillary","Rubio","Cruz","President",
                     "Russia","Syria","Obama","Cameron","Merkel","Bitcoin",
-                    "Refugee","Migrant","Refugees", "Migrants","Facebook"
+                    "Refugee","Migrant","Refugees", "Migrants"
                   };
-    
+
     FilterQuery q = new FilterQuery();
 
     q.language("en");
     q.track(s);
-    
+
     return q;
   }
-  
-  public void open() 
+
+  public void open()
   {
     Listener l = new Listener();
     LifeCycleListener lcl = new LifeCycleListener();
-    
+
     twitterStream.addListener(l);
     twitterStream.addConnectionLifeCycleListener(lcl);
 
     FilterQuery q = setFilter();
     twitterStream.filter(q);
-  } 
+  }
 }

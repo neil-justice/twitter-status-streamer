@@ -1,5 +1,5 @@
-/* Listens to  a stream.  When a status (message) is recieved, adds the raw   
- * JSON data to the specified mongoDB database. 
+/* Listens to  a stream.  When a status (message) is recieved, adds the raw
+ * JSON data to the specified mongoDB database.
  */
 
 import twitter4j.StallWarning;
@@ -8,52 +8,48 @@ import twitter4j.StatusListener;
 import twitter4j.StatusDeletionNotice;
 import twitter4j.TwitterObjectFactory;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoException;
-import com.mongodb.util.JSON;
-
 class Listener implements StatusListener
 {
-  private MongoClient mongoClient;
-  private DB db;
-  private DBCollection coll;
-  private String dbName = "stream";
-  private String collName = "statuses";
-  
+  private long count = 0;
+  private SQLConnection db;
+
   public Listener()
   {
-    try {
-      mongoClient = new MongoClient( "localhost" , 27017 );
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    
-    db = mongoClient.getDB(dbName);
-    coll = db.getCollection(collName);
-  }
-  
-  @Override
-  public void onStatus(Status status) 
-  {
-    System.out.println("Tweet from: " + status.getUser().getScreenName() + 
-                       "Downloaded.");
+    db = new SQLConnection();
 
-    System.out.println("Timestamp: " + 
-                        String.valueOf(status.getCreatedAt().getTime()));
-                      
-    DBObject obj = (DBObject)JSON.parse
-                   (TwitterObjectFactory.getRawJSON(status));
-    
-    coll.insert(obj);
+    db.open();
+
+    count = 0;
   }
-    
+
+  // Sends statuses to the connected SQL database in groups of 100.
   @Override
-  public void onException(Exception e) 
+  public void onStatus(Status status)
+  {
+    String name    = status.getUser().getScreenName();
+    long uid       = status.getUser().getId();
+
+    String text    = status.getText();
+    long sid       = status.getId();
+    long timestamp = status.getCreatedAt().getTime();
+
+    if (count % 100 == 0) {
+      db.beginTransaction();
+    }
+
+    db.addUser(uid, name);
+    db.addStatus(sid, text, timestamp, uid);
+
+    count++;
+    if (count % 100 == 0) {
+      System.out.println("" + count + " in db.");
+      db.setTransactionSuccessful();
+      db.endTransaction();
+    }
+  }
+
+  @Override
+  public void onException(Exception e)
   {
     System.out.println("Exception: " + e.getMessage());
     e.getMessage();
@@ -63,12 +59,12 @@ class Listener implements StatusListener
   @Override
   public void onTrackLimitationNotice(int numberOfLimitedStatuses)
   {
-    System.out.println("Got track limitation notice:" 
+    System.out.println("Got track limitation notice:"
                        + numberOfLimitedStatuses);
   }
 
   @Override
-  public void onStallWarning(StallWarning warning) 
+  public void onStallWarning(StallWarning warning)
   {
     System.out.println("Got stall warning:" + warning);
   }
