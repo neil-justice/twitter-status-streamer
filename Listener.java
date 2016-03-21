@@ -1,5 +1,5 @@
 /* Listens to  a stream.  When a status (message) is recieved, adds the raw
- * JSON data to the specified mongoDB database.
+ * JSON data to the specified SQLite database.
  */
 
 import twitter4j.StallWarning;
@@ -33,18 +33,13 @@ class Listener implements StatusListener
     long sid       = status.getId();
     long timestamp = status.getCreatedAt().getTime();
 
-    if (count % 100 == 0) {
-      db.beginTransaction();
-    }
-
     db.addUser(uid, name);
     db.addStatus(sid, text, timestamp, uid);
 
     count++;
     if (count % 100 == 0) {
+      db.commit();
       System.out.println("" + count + " in db.");
-      db.setTransactionSuccessful();
-      db.endTransaction();
     }
   }
 

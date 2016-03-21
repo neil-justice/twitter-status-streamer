@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public class SQLConnection implements Runnable, AutoCloseable
+public class SQLConnection implements AutoCloseable
 {
   static final String CONNECTION = "jdbc:sqlite:statuses.db";
   private Connection c;
@@ -14,9 +14,11 @@ public class SQLConnection implements Runnable, AutoCloseable
   {
     try {
       c = DriverManager.getConnection(CONNECTION);
+      c.setAutoCommit(false);  // Allow transactions
+      closeOnShutdown();
     } catch (SQLException e) {
       c = null;
-      e.printStackTrace();
+      System.out.println(e.getMessage());
     }
   }
 
@@ -30,7 +32,27 @@ public class SQLConnection implements Runnable, AutoCloseable
       c.close();
       c = null;
     } catch (SQLException e) {
-      e.printStackTrace();
+      System.out.println(e.getMessage());
+    }
+  }
+
+  // Uses a shutdown hook to close the database connection
+  private void closeOnShutdown()
+  {
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      public void run() {
+        close();
+        System.out.println("SQL connection closed.");
+      }
+    });
+  }
+
+  public void commit()
+  {
+    try {
+      c.commit();
+    } catch (SQLException e) {
+      System.out.println(e.getMessage());
     }
   }
 
@@ -48,8 +70,8 @@ public class SQLConnection implements Runnable, AutoCloseable
       s.setLong(4, author);
 
       s.execute();
-    } catch (Exception e) {
-        e.printStackTrace();
+    } catch (SQLException e) {
+      System.out.println(e.getMessage());
     }
   }
 
@@ -66,15 +88,7 @@ public class SQLConnection implements Runnable, AutoCloseable
 
       s.execute();
     } catch (Exception e) {
-        e.printStackTrace();
+        System.out.println("User already in db.");
     }
-  }
-
-  @override
-  public void run()
-  {
-    open();
-
-    close();
   }
 }
