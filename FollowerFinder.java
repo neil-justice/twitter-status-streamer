@@ -40,7 +40,7 @@ class FollowerFinder implements Runnable
         if ((i = getCallsRemaining()) > 0) {
           System.out.println("Getting followers for User " + l);
           System.out.println("" + i + " calls remaining.");
-          //find(l);
+          find(l);
           Thread.sleep(5000);
         }
         else {
