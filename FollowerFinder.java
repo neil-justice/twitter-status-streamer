@@ -93,6 +93,7 @@ class FollowerFinder implements Runnable
   private void find(long uid)
   {
     try {
+      cursor = -1;
       do {
         ids = twitter.getFollowersIDs(uid, cursor);
         for (long id : ids.getIDs()) {
