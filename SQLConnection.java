@@ -16,7 +16,7 @@ public class SQLConnection implements AutoCloseable
     try {
       c = DriverManager.getConnection(CONNECTION);
       c.setAutoCommit(false);  // Allow transactions
-      closeOnShutdown();
+      System.out.println("SQL Connection open.");
     } catch (SQLException e) {
       c = null;
       System.out.println(e.getMessage());
@@ -27,33 +27,30 @@ public class SQLConnection implements AutoCloseable
   public void close()
   {
     try {
-      if (c == null) {
-        return;
-      }
+      if (c == null) { return; }
+
       c.close();
       c = null;
+      System.out.println("SQL connection closed.");
     } catch (SQLException e) {
       System.out.println(e.getMessage());
     }
   }
 
-  // Uses a shutdown hook to close the database connection
-  private void closeOnShutdown()
+  // Wrapper for commit() method which gives info about the number of times an
+  // INSERT into table User due to id uniqueness violation (i.e. a tweet from
+  // this user has been streamed before and the user is already in th db)
+  public void commitStream()
   {
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      public void run() {
-        close();
-        System.out.println("SQL connection closed.");
-      }
-    });
+    commit();
+    System.out.println("" + nonUnique + "/100 are non-unique users.");
+    nonUnique = 0;
   }
 
   public void commit()
   {
     try {
       c.commit();
-      System.out.println("" + nonUnique + "non-unique users");
-      nonUnique = 0;
     } catch (SQLException e) {
       System.out.println(e.getMessage());
     }
@@ -92,6 +89,83 @@ public class SQLConnection implements AutoCloseable
       s.execute();
     } catch (SQLException e) {
       nonUnique++;
+    }
+  }
+
+  public void addFollower(long uid, long follower)
+  {
+    if (c == null) { throw new IllegalStateException(); }
+
+    try ( PreparedStatement s = c.prepareStatement(
+         "INSERT INTO Follower " +
+         "VALUES( null, ?, ? )")) {
+
+      s.setLong(1, uid);
+      s.setLong(2, follower);
+
+      s.execute();
+    } catch (SQLException e) {
+      System.out.println(e.getMessage());
+    }
+  }
+
+  public long count()
+  {
+    if (c == null) { throw new IllegalStateException(); }
+
+    int count = 0;
+
+    try ( PreparedStatement s = c.prepareStatement(
+         "SELECT COUNT(*) FROM Status")) {
+
+      ResultSet r = s.executeQuery();
+      count = r.getInt(1);
+
+    } catch (SQLException e) {
+      System.out.println(e.getMessage());
+    }
+
+    return count;
+  }
+
+  // Returns the next user who
+  // a. follow a known user
+  // b. have not had their follower list populated.
+  // If none exists, returns one who just satisfies b.
+  public long getNextUser()
+  {
+    long l =
+    getUser("SELECT User.uid
+             FROM User
+             LEFT JOIN Follower ON Follower.user = User.uid
+             WHERE Follower.user IS NULL
+             INTERSECT
+             SELECT User.uid
+             FROM User
+             INNER JOIN Follower ON Follower.follower = User.uid
+             GROUP BY uid LIMIT 1;");
+
+    // JDBC returns 0 from getLong if SQL NULL was found
+    if (long l == 0) {
+      l = getUser("SELECT User.uid
+                   FROM User
+                   LEFT JOIN Follower ON Follower.user = User.uid
+                   WHERE Follower.user IS NULL;");
+    }
+    return l;
+  }
+
+  private Long getUser(String stmt)
+  {
+    if (c == null) { throw new IllegalStateException(); }
+
+    try (PreparedStatement s = c.prepareStatement(stmt)) {
+
+        ResultSet r = s.executeQuery();
+        return r.getLong(uid);
+
+    } catch (SQLException e) {
+        throw new RuntimeException(e);
     }
   }
 }

@@ -1,50 +1,38 @@
 /*  Interfaces with the Twitter streaming API using the twitter4j library.  see
  *  https://dev.twitter.com/streaming/reference/post/statuses/filter
- *  for more info on the connection.  Tweets are sent directly to a mongoDB
- *  database as JSON objects.
+ *  for more info on the connection.  Tweets are sent directly to an SQLite
+ *  database.
  */
-
-import java.util.Properties;
-import java.io.FileInputStream;
 
 import twitter4j.FilterQuery;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
-import twitter4j.conf.ConfigurationBuilder;
+import twitter4j.conf.Configuration;
 import twitter4j.TwitterObjectFactory;
 import twitter4j.Status;
 import twitter4j.StatusListener;
 import twitter4j.ConnectionLifeCycleListener;
 
-class Streamer
+class StatusStreamer implements Runnable
 {
   private TwitterStream twitterStream;
-	private Properties prop = new Properties();
 
-  public static void main(String[] args)
-  {
-    Streamer s = new Streamer();
-    s.open();
-  }
+  private SQLConnection db;
 
-  //loads properties for the Configuration object from a properties file
-  public Streamer()
+  public StatusStreamer(SQLConnection db, Configuration c)
   {
+    this.db = db;
 		try {
-			prop.load(new FileInputStream("stream.properties"));
-
-			ConfigurationBuilder cb = new ConfigurationBuilder();
-			cb.setOAuthConsumerKey(prop.getProperty("CONSUMER_KEY"));
-			cb.setOAuthConsumerSecret(prop.getProperty("CONSUMER_SECRET"));
-			cb.setOAuthAccessToken(prop.getProperty("ACCESS_TOKEN"));
-			cb.setOAuthAccessTokenSecret(prop.getProperty("ACCESS_TOKEN_SECRET"));
-			cb.setJSONStoreEnabled(true);
-
-			twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
-
+			twitterStream = new TwitterStreamFactory(c).getInstance();
     } catch (Exception e) {
 			e.printStackTrace();
     }
+  }
+  
+  @Override
+  public void run()
+  {
+    open();
   }
 
   private FilterQuery setFilter()
@@ -64,14 +52,20 @@ class Streamer
   }
 
   public void open()
-  {
-    Listener l = new Listener();
+  { 
+    Listener l = new Listener(db);
     LifeCycleListener lcl = new LifeCycleListener();
-
+    
     twitterStream.addListener(l);
     twitterStream.addConnectionLifeCycleListener(lcl);
 
     FilterQuery q = setFilter();
     twitterStream.filter(q);
+  }
+  
+  public void close()
+  {
+    twitterStream.cleanUp();
+    twitterStream.shutdown();  
   }
 }

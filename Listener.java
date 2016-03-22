@@ -13,13 +13,11 @@ class Listener implements StatusListener
   private long count = 0;
   private SQLConnection db;
 
-  public Listener()
+  public Listener(SQLConnection db)
   {
-    db = new SQLConnection();
+    this.db = db;
 
-    db.open();
-
-    count = 0;
+    count = db.count();
   }
 
   // Sends statuses to the connected SQL database in groups of 100.
@@ -38,7 +36,7 @@ class Listener implements StatusListener
 
     count++;
     if (count % 100 == 0) {
-      db.commit();
+      db.commitStream();
       System.out.println("" + count + " in db.");
     }
   }
@@ -54,8 +52,9 @@ class Listener implements StatusListener
   @Override
   public void onTrackLimitationNotice(int numberOfLimitedStatuses)
   {
-    System.out.println("Got track limitation notice:"
-                       + numberOfLimitedStatuses);
+    System.out.println("Warning: "
+                       + numberOfLimitedStatuses
+                       + " statuses missed from stream.");
   }
 
   @Override
