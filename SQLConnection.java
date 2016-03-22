@@ -128,7 +128,7 @@ public class SQLConnection implements AutoCloseable
     return count;
   }
 
-  // Returns the next user who
+  // Returns a list of users who
   // a. follow a known user
   // b. have not had their follower list populated.
   // If none exists, returns one who just satisfies b.
@@ -145,7 +145,6 @@ public class SQLConnection implements AutoCloseable
             + " INNER JOIN Follower ON Follower.follower = User.uid"
             + " GROUP BY uid");
 
-    // JDBC returns 0 from getLong if SQL NULL was found
     if (list.isEmpty()) {
       list = getUsers("SELECT User.uid"
                   + " FROM User"

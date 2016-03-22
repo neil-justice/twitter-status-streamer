@@ -99,7 +99,8 @@ class FollowerFinder implements Runnable
         for (long id : ids.getIDs()) {
           db.addFollower(uid, id);
         }
-      } while ((cursor = ids.getNextCursor()) != 0);
+      } while ((cursor = ids.getNextCursor()) != 0
+               && getCallsRemaining() > 0);
 
       db.commit();
 
