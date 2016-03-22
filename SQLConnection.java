@@ -136,21 +136,21 @@ public class SQLConnection implements AutoCloseable
   {
     long l =
     getUser("SELECT User.uid"
-            + "FROM User"
-            + "LEFT JOIN Follower ON Follower.user = User.uid"
-            + "WHERE Follower.user IS NULL"
-            + "INTERSECT"
-            + "SELECT User.uid"
-            + "FROM User"
-            + "INNER JOIN Follower ON Follower.follower = User.uid"
-            + "GROUP BY uid LIMIT 1");
+            + " FROM User"
+            + " LEFT JOIN Follower ON Follower.user = User.uid"
+            + " WHERE Follower.user IS NULL"
+            + " INTERSECT"
+            + " SELECT User.uid"
+            + " FROM User"
+            + " INNER JOIN Follower ON Follower.follower = User.uid"
+            + " GROUP BY uid LIMIT 1");
 
     // JDBC returns 0 from getLong if SQL NULL was found
     if (l == 0) {
       l = getUser("SELECT User.uid"
-                  + "FROM User"
-                  + "LEFT JOIN Follower ON Follower.user = User.uid"
-                  + "WHERE Follower.user IS NULL");
+                  + " FROM User"
+                  + " LEFT JOIN Follower ON Follower.user = User.uid"
+                  + " WHERE Follower.user IS NULL LIMIT 1");
     }
     return l;
   }
@@ -162,7 +162,7 @@ public class SQLConnection implements AutoCloseable
     try (PreparedStatement s = c.prepareStatement(stmt)) {
 
         ResultSet r = s.executeQuery();
-        return r.getLong("uid");
+        return r.getLong("User.uid");
 
     } catch (SQLException e) {
         throw new RuntimeException(e);
