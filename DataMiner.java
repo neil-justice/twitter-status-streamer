@@ -10,20 +10,20 @@ class DataMiner
   private StatusStreamer streamer;
   private FollowerFinder finder;
   private Configuration c;
-  
+
   public static void main(String[] args)
   {
     DataMiner d = new DataMiner();
     d.run();
   }
-  
+
   public DataMiner()
   {
     Properties prop = new Properties();
-    
+
     try {
       prop.load(new FileInputStream("stream.properties"));
-      
+
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.setOAuthConsumerKey(prop.getProperty("CONSUMER_KEY"));
       cb.setOAuthConsumerSecret(prop.getProperty("CONSUMER_SECRET"));
@@ -35,17 +35,19 @@ class DataMiner
       e.printStackTrace();
     }
   }
-  
+
   public void run()
   {
     db = new SQLConnection();
     db.open();
     closeOnShutdown();
-    
+
     streamer = new StatusStreamer(db, c);
-    streamer.run();
+    finder = new FollowerFinder(db, c);
+    finder.run();
+    //streamer.run();
   }
-  
+
   // Uses a shutdown hook to close the database and stream connections on exit.
   private void closeOnShutdown()
   {

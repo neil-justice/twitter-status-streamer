@@ -7,6 +7,7 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.RateLimitStatus;
+import twitter4j.conf.Configuration;
 
 class FollowerFinder implements Runnable
 {
@@ -15,23 +16,34 @@ class FollowerFinder implements Runnable
   private long cursor;
   private SQLConnection db;
 
-  public FollowerFinder(SQLConnection db)
+  public FollowerFinder(SQLConnection db, Configuration c)
   {
     this.db = db;
 
-    twitter = new TwitterFactory().getInstance();
+    twitter = new TwitterFactory(c).getInstance();
     cursor = -1; // For navigating result sets with >1 page
   }
 
   @Override
   public void run()
   {
-    while ((long l = db.getNextUser()) != 0) {
-      if (getCallsRemaining() > 0) {
+    long l;
+    int i;
+
+    while ((l = db.getNextUser()) != 0) {
+      if ((i = getCallsRemaining()) > 0) {
+        System.out.println("" + i + " calls remaining.");
         find(l);
+        System.out.println("Getting followers for User " + l);
       }
       else {
-        Thread.sleep(getSecondsUntilLimitReset() * 1000);
+        int s = getSecondsUntilLimitReset();
+        System.out.println("Sleeping now for " + s + " seconds");
+        try {
+          Thread.sleep(s * 1000);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }
     }
   }
