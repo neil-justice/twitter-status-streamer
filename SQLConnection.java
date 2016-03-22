@@ -132,10 +132,10 @@ public class SQLConnection implements AutoCloseable
   // a. follow a known user
   // b. have not had their follower list populated.
   // If none exists, returns one who just satisfies b.
-  public long getNextUser()
+  public List<Long> getUserList()
   {
-    long l =
-    getUser("SELECT User.uid"
+    List<Long> list =
+    getUsers("SELECT User.uid"
             + " FROM User"
             + " LEFT JOIN Follower ON Follower.user = User.uid"
             + " WHERE Follower.user IS NULL"
@@ -143,26 +143,31 @@ public class SQLConnection implements AutoCloseable
             + " SELECT User.uid"
             + " FROM User"
             + " INNER JOIN Follower ON Follower.follower = User.uid"
-            + " GROUP BY uid LIMIT 1");
+            + " GROUP BY uid");
 
     // JDBC returns 0 from getLong if SQL NULL was found
-    if (l == 0) {
-      l = getUser("SELECT User.uid"
+    if (list.isEmpty()) {
+      list = getUsers("SELECT User.uid"
                   + " FROM User"
                   + " LEFT JOIN Follower ON Follower.user = User.uid"
-                  + " WHERE Follower.user IS NULL LIMIT 1");
+                  + " WHERE Follower.user IS NULL");
     }
-    return l;
+    return list;
   }
 
-  private Long getUser(String stmt)
+  private List<Long> getUsers(String stmt)
   {
     if (c == null) { throw new IllegalStateException(); }
 
+    List<Long> list = new ArrayList<Long>();
+
     try (PreparedStatement s = c.prepareStatement(stmt)) {
 
-        ResultSet r = s.executeQuery();
-        return r.getLong("User.uid");
+      ResultSet r = s.executeQuery();
+      while (r.next()) {
+        list.add(r.getLong("User.uid"));
+      }
+      return list;
 
     } catch (SQLException e) {
         throw new RuntimeException(e);

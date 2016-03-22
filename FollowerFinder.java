@@ -9,16 +9,21 @@ import twitter4j.TwitterFactory;
 import twitter4j.RateLimitStatus;
 import twitter4j.conf.Configuration;
 
+import java.util.*;
+
 class FollowerFinder implements Runnable
 {
   private Twitter twitter;
   private IDs ids;
   private long cursor;
   private SQLConnection db;
+  private List<Long> users; // IDs to be checked.
 
   public FollowerFinder(SQLConnection db, Configuration c)
   {
     this.db = db;
+
+    users = db.getUserList();
 
     twitter = new TwitterFactory(c).getInstance();
     cursor = -1; // For navigating result sets with >1 page
@@ -27,23 +32,24 @@ class FollowerFinder implements Runnable
   @Override
   public void run()
   {
-    long l;
     int i;
 
-    while ((l = db.getNextUser()) != 0) {
-      if ((i = getCallsRemaining()) > 0) {
-        System.out.println("" + i + " calls remaining.");
-        find(l);
-        System.out.println("Getting followers for User " + l);
-      }
-      else {
-        int s = getSecondsUntilLimitReset();
-        System.out.println("Sleeping now for " + s + " seconds");
-        try {
-          Thread.sleep(s * 1000);
-        } catch (Exception e) {
-          e.printStackTrace();
+    while (!users.isEmpty()) {
+      try {
+        long l = users.remove(0);
+        if ((i = getCallsRemaining()) > 0) {
+          System.out.println("Getting followers for User " + l);
+          System.out.println("" + i + " calls remaining.");
+          //find(l);
+          Thread.sleep(5000);
         }
+        else {
+          int s = getSecondsUntilLimitReset();
+          System.out.println("Sleeping now for " + s + " seconds");
+          Thread.sleep(s * 1000);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     }
   }
