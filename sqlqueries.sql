@@ -16,11 +16,10 @@ FROM User
 INNER JOIN Follower ON Follower.user = User.uid
 GROUP BY uid;
 
--- Find all Users who are followers and users
+-- Find all Users who are also known followers
 
 SELECT User.uid
-FROM User
-INNER JOIN Follower ON Follower.follower = User.uid;
+FROM User INNER JOIN Follower ON Follower.follower = User.uid;
 
 -- Count users who are also known followers
 
@@ -56,3 +55,15 @@ SELECT User.uid
 FROM User
 INNER JOIN Follower ON Follower.follower = User.uid
 GROUP BY uid;
+
+-- count tweets made by users who are known to be followers
+
+SELECT COUNT(sid)
+FROM User INNER JOIN Follower ON Follower.follower = User.uid,
+Status
+WHERE author = User.uid;
+
+-- Return everything needed for a status object
+
+SELECT text, uid, name FROM 
+User INNER JOIN Status ON User.uid = Status.author;

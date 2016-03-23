@@ -10,6 +10,7 @@ import twitter4j.RateLimitStatus;
 import twitter4j.conf.Configuration;
 
 import java.util.*;
+import java.text.SimpleDateFormat;
 
 class FollowerFinder implements Runnable
 {
@@ -44,6 +45,8 @@ class FollowerFinder implements Runnable
           Thread.sleep(5000);
         }
         else {
+          System.out.println("Time: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+                             .format(Calendar.getInstance().getTime()));
           int s = getSecondsUntilLimitReset();
           System.out.println("Sleeping now for " + s + " seconds");
           Thread.sleep(s * 1000);

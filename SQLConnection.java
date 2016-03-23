@@ -172,4 +172,55 @@ public class SQLConnection implements AutoCloseable
         throw new RuntimeException(e);
     }
   }
+  
+  public List<Status> getStatuses()
+  {
+    if (c == null) { throw new IllegalStateException(); }
+
+    List<Status> list = new ArrayList<Status>();
+
+    try (PreparedStatement s = c.prepareStatement(
+         "SELECT text, uid, name FROM"
+         + " User INNER JOIN Status ON User.uid = Status.author")) {
+
+      ResultSet r = s.executeQuery();
+      while (r.next()) {
+        Status st = new Status(
+          r.getString("text"),
+          r.getLong("uid"),
+          r.getString("name"));
+        list.add(st);
+      }
+      return list;
+
+    } catch (SQLException e) {
+        throw new RuntimeException(e);
+    }  
+  }
+  
+  // Returns 0 if the name has no known ID
+  public long getIDFromName(String name)
+  {
+    if (c == null) { throw new IllegalStateException(); }
+
+    try ( PreparedStatement s = c.prepareStatement(
+         "SELECT uid FROM User WHERE name = ?")) {
+      
+      long id;
+      
+      s.setString(1, name);
+      ResultSet r = s.executeQuery();
+
+      if (r.next()) {
+        id = r.getLong("uid");
+      } else {
+        id = 0;
+      }
+      
+      return id;
+
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
