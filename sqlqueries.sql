@@ -76,3 +76,17 @@ SELECT COUNT(*) FROM
 -- count all mentions
 
 SELECT COUNT(*) FROM Mention;
+
+-- coutn users by number of mentions 
+
+SELECT user, COUNT(mentioned) AS m FROM Mention GROUP BY user ORDER BY m ASC;
+
+-- Count all tweets authored by someone who has mentioned someone else in the db
+
+SELECT COUNT(*) FROM 
+Status
+WHERE Status.author IN (SELECT DISTINCT user FROM Mention);
+
+SELECT a.*, b.*
+FROM Mentions AS a INNER JOIN Mentions AS b
+ON a.user = b.mentioned AND b.user = a.mentioned;
