@@ -7,16 +7,23 @@ class MentionFinder
 {
   private SQLConnection db;
   private List<Status> statuses;
+  private List<User> users;
   private List<String> namesMentioned;
-  private List<Long> IDsMentioned;
+  private Map<String, Long> uidLookup;
   private char c = '@';
   private int count;
   
   public static void main(String[] args)
   {
     MentionFinder m = new MentionFinder();
-    m.findMentions();
-    m.printResults();
+    m.run();
+  }
+  
+  public void run()
+  {
+    findMentions();
+    addMentions();
+    printResults();
   }
   
   public MentionFinder()
@@ -24,44 +31,68 @@ class MentionFinder
     db = new SQLConnection();
     db.open();
     statuses = db.getStatuses();
+    users = db.getUsers();
     namesMentioned = new ArrayList<String>();
-    IDsMentioned = new ArrayList<Long>();
+    uidLookup = new HashMap<String, Long>();
+    populateLookups();
   }
   
-  public void findMentions()
+  private void populateLookups()
+  {
+    for (User u: users) {
+      uidLookup.put(u.username(), u.uid());
+    }
+  }
+  
+  private void findMentions()
   {
     count = 0;
+    List<Long> mentions;
     
     for (Status s: statuses) {
       if (s.text().contains("" + c)) {
-        findMentionedUser(s.text());
+        mentions = findMentionedUsers(s.text());
+        for (long l: mentions) {
+          s.addMention(l);
+        }
         count++;
       }
     }
   }
   
-  public void findMentionedUser(String s)
+  private List<Long> findMentionedUsers(String s)
   {
     String[] words = s.split(" ");
+    List<Long> mentions = new ArrayList<Long>();
     
     for (String w: words) {
       if (w.startsWith("@")) {
         String name = w.replaceAll("[^a-zA-Z0-9_]", "");
         namesMentioned.add(name);
-        long l = db.getIDFromName(name);
-        if (l != 0) {
-          IDsMentioned.add(l);
+        Long l = uidLookup.get(name);
+        if (l != null) {
+          mentions.add(l);
         }
       }
     }
+    
+    return mentions;
   }
   
+  private void addMentions()
+  {
+    for (Status s: statuses) {
+      for (long l: s.mentions()) {
+        db.addMention(s.uid(), l);
+      }
+    }
+    db.commit();
+  }
   
-  public void printResults()
+  private void printResults()
   {
     System.out.println("Total number of tweets: " + db.count());
     System.out.println("Number containing mentions: " + count);
     System.out.println("Number of discrete mentions: " + namesMentioned.size());
-    System.out.println("Number of known IDs mentioned: " + IDsMentioned.size());
   }
 }

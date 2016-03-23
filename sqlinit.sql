@@ -1,6 +1,5 @@
 DROP TABLE IF EXISTS User;
 DROP TABLE IF EXISTS Status;
-DROP TABLE IF EXISTS Follower;
 DROP TABLE IF EXISTS Mention;
 
 CREATE TABLE User (
@@ -15,15 +14,8 @@ CREATE TABLE Status (
   author INTEGER REFERENCES User(uid)
 );
 
-CREATE TABLE Follower (
-  fid INTEGER PRIMARY KEY,
-  user INTEGER REFERENCES User(uid),
-  follower INTEGER REFERENCES User(uid)
-);
-
 CREATE TABLE Mention (
   mid INTEGER PRIMARY KEY,
   user INTEGER REFERENCES User(uid),
-  mentioned INTEGER REFERENCES User(uid),
-  count INTEGER NOT NULL
+  mentioned INTEGER REFERENCES User(uid)
 );

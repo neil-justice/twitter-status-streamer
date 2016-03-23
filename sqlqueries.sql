@@ -67,3 +67,12 @@ WHERE author = User.uid;
 
 SELECT text, uid, name FROM 
 User INNER JOIN Status ON User.uid = Status.author;
+
+-- count all distinct mentions
+
+SELECT COUNT(*) FROM
+(SELECT DISTINCT user, mentioned FROM Mention);
+
+-- count all mentions
+
+SELECT COUNT(*) FROM Mention;

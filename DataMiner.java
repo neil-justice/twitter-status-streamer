@@ -8,7 +8,7 @@ class DataMiner
 {
   private SQLConnection db;
   private StatusStreamer streamer;
-  private FollowerFinder finder;
+  //private FollowerFinder finder;
   private Configuration c;
 
   public static void main(String[] args)
@@ -43,9 +43,9 @@ class DataMiner
     closeOnShutdown();
 
     streamer = new StatusStreamer(db, c);
-    //streamer.run();
-    finder = new FollowerFinder(db, c);
-    finder.run();
+    streamer.run();
+    //finder = new FollowerFinder(db, c);
+    //finder.run();
   }
 
   // Uses a shutdown hook to close the database and stream connections on exit.

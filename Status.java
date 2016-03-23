@@ -20,6 +20,7 @@ class Status
     this.text = text;
     this.uid = uid;
     this.username = username;
+    mentions = new ArrayList<Long>();
   }
   
   public String text() { return text; }
@@ -27,8 +28,5 @@ class Status
   public String username() { return username; }
   public List<Long> mentions() { return mentions; }
   
-  public void addMention(long mention)
-  {
-    mentions.add(mention);
-  }
+  public void addMention(long mention) { mentions.add(mention); }
 }
