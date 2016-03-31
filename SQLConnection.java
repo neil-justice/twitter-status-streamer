@@ -75,16 +75,18 @@ public class SQLConnection implements AutoCloseable
     }
   }
 
-  public void addUser(long id, String name)
+  public void addUser(long id, String name, int followers,int friends)
   {
     if (c == null) { throw new IllegalStateException(); }
 
     try ( PreparedStatement s = c.prepareStatement(
          "INSERT INTO User " +
-         "VALUES( ?, ? )")) {
+         "VALUES( ?, ?, ?, ? )")) {
 
       s.setLong(1, id);
       s.setString(2, name);
+      s.setInt(3, followers);
+      s.setInt(4, friends);
 
       s.execute();
     } catch (SQLException e) {
@@ -92,24 +94,7 @@ public class SQLConnection implements AutoCloseable
     }
   }
 
-  public void addFollower(long uid, long follower)
-  {
-    if (c == null) { throw new IllegalStateException(); }
-
-    try ( PreparedStatement s = c.prepareStatement(
-         "INSERT INTO Follower " +
-         "VALUES( null, ?, ? )")) {
-
-      s.setLong(1, uid);
-      s.setLong(2, follower);
-
-      s.execute();
-    } catch (SQLException e) {
-      System.out.println(e.getMessage());
-    }
-  }
-
-  public long count()
+  public long countStatuses()
   {
     if (c == null) { throw new IllegalStateException(); }
 
@@ -128,48 +113,67 @@ public class SQLConnection implements AutoCloseable
     return count;
   }
 
-  // Returns a list of users who
-  // a. follow a known user
-  // b. have not had their follower list populated.
-  // If none exists, returns one who just satisfies b.
-  public List<Long> getUserList()
-  {
-    List<Long> list =
-    getUsers("SELECT User.uid"
-            + " FROM User"
-            + " LEFT JOIN Follower ON Follower.user = User.uid"
-            + " WHERE Follower.user IS NULL"
-            + " INTERSECT"
-            + " SELECT User.uid"
-            + " FROM User"
-            + " INNER JOIN Follower ON Follower.follower = User.uid"
-            + " GROUP BY uid");
 
-    if (list.isEmpty()) {
-      list = getUsers("SELECT User.uid"
-                  + " FROM User"
-                  + " LEFT JOIN Follower ON Follower.user = User.uid"
-                  + " WHERE Follower.user IS NULL");
-    }
-    return list;
-  }
-
-  private List<Long> getUsers(String stmt)
+  public List<DBUser> getUsers()
   {
     if (c == null) { throw new IllegalStateException(); }
 
-    List<Long> list = new ArrayList<Long>();
+    List<DBUser> list = new ArrayList<DBUser>();
 
-    try (PreparedStatement s = c.prepareStatement(stmt)) {
+    try (PreparedStatement s = c.prepareStatement(
+         "SELECT uid, name FROM User")) {
 
       ResultSet r = s.executeQuery();
       while (r.next()) {
-        list.add(r.getLong("User.uid"));
+        DBUser u = new DBUser(r.getLong("uid"), r.getString("name"));
+        list.add(u);
       }
       return list;
 
     } catch (SQLException e) {
         throw new RuntimeException(e);
+    }
+  }
+
+  public List<DBStatus> getStatuses()
+  {
+    if (c == null) { throw new IllegalStateException(); }
+
+    List<DBStatus> list = new ArrayList<DBStatus>();
+
+    try (PreparedStatement s = c.prepareStatement(
+         "SELECT text, uid, name FROM"
+         + " User INNER JOIN Status ON User.uid = Status.author")) {
+
+      ResultSet r = s.executeQuery();
+      while (r.next()) {
+        DBStatus st = new DBStatus(
+          r.getString("text"),
+          r.getLong("uid"),
+          r.getString("name"));
+        list.add(st);
+      }
+      return list;
+
+    } catch (SQLException e) {
+        throw new RuntimeException(e);
+    }
+  }
+
+  public void addMention(long uid, long mentioned)
+  {
+    if (c == null) { throw new IllegalStateException(); }
+
+    try ( PreparedStatement s = c.prepareStatement(
+         "INSERT INTO Mention " +
+         "VALUES( null, ?, ? )")) {
+
+      s.setLong(1, uid);
+      s.setLong(2, mentioned);
+
+      s.execute();
+    } catch (SQLException e) {
+      System.out.println(e.getMessage());
     }
   }
 }

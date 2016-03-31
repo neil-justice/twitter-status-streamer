@@ -17,7 +17,7 @@ class Listener implements StatusListener
   {
     this.db = db;
 
-    count = db.count();
+    count = db.countStatuses();
   }
 
   // Sends statuses to the connected SQL database in groups of 100.
@@ -31,7 +31,10 @@ class Listener implements StatusListener
     long sid       = status.getId();
     long timestamp = status.getCreatedAt().getTime();
 
-    db.addUser(uid, name);
+    int followers  = status.getUser().getFollowersCount();
+    int friends    = status.getUser().getFriendsCount();
+
+    db.addUser(uid, name, followers, friends);
     db.addStatus(sid, text, timestamp, uid);
 
     count++;
