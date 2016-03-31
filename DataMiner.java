@@ -44,8 +44,6 @@ class DataMiner
 
     streamer = new StatusStreamer(db, c);
     streamer.run();
-    //finder = new FollowerFinder(db, c);
-    //finder.run();
   }
 
   // Uses a shutdown hook to close the database and stream connections on exit.

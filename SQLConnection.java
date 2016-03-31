@@ -75,16 +75,18 @@ public class SQLConnection implements AutoCloseable
     }
   }
 
-  public void addUser(long id, String name)
+  public void addUser(long id, String name, int followers,int friends)
   {
     if (c == null) { throw new IllegalStateException(); }
 
     try ( PreparedStatement s = c.prepareStatement(
          "INSERT INTO User " +
-         "VALUES( ?, ? )")) {
+         "VALUES( ?, ?, ?, ? )")) {
 
       s.setLong(1, id);
       s.setString(2, name);
+      s.setInt(3, followers);
+      s.setInt(4, friends);
 
       s.execute();
     } catch (SQLException e) {
@@ -92,7 +94,7 @@ public class SQLConnection implements AutoCloseable
     }
   }
 
-  public long count()
+  public long countStatuses()
   {
     if (c == null) { throw new IllegalStateException(); }
 
@@ -112,18 +114,18 @@ public class SQLConnection implements AutoCloseable
   }
 
 
-  public List<User> getUsers()
+  public List<DBUser> getUsers()
   {
     if (c == null) { throw new IllegalStateException(); }
 
-    List<User> list = new ArrayList<User>();
+    List<DBUser> list = new ArrayList<DBUser>();
 
     try (PreparedStatement s = c.prepareStatement(
          "SELECT uid, name FROM User")) {
 
       ResultSet r = s.executeQuery();
       while (r.next()) {
-        User u = new User(r.getLong("uid"), r.getString("name"));
+        DBUser u = new DBUser(r.getLong("uid"), r.getString("name"));
         list.add(u);
       }
       return list;
@@ -132,12 +134,12 @@ public class SQLConnection implements AutoCloseable
         throw new RuntimeException(e);
     }
   }
-  
-  public List<Status> getStatuses()
+
+  public List<DBStatus> getStatuses()
   {
     if (c == null) { throw new IllegalStateException(); }
 
-    List<Status> list = new ArrayList<Status>();
+    List<DBStatus> list = new ArrayList<DBStatus>();
 
     try (PreparedStatement s = c.prepareStatement(
          "SELECT text, uid, name FROM"
@@ -145,7 +147,7 @@ public class SQLConnection implements AutoCloseable
 
       ResultSet r = s.executeQuery();
       while (r.next()) {
-        Status st = new Status(
+        DBStatus st = new DBStatus(
           r.getString("text"),
           r.getLong("uid"),
           r.getString("name"));
@@ -155,35 +157,9 @@ public class SQLConnection implements AutoCloseable
 
     } catch (SQLException e) {
         throw new RuntimeException(e);
-    }  
-  }
-  
-  // Returns 0 if the name has no known ID
-  public long getIDFromName(String name)
-  {
-    if (c == null) { throw new IllegalStateException(); }
-
-    try ( PreparedStatement s = c.prepareStatement(
-         "SELECT uid FROM User WHERE name = ?")) {
-      
-      long id;
-      
-      s.setString(1, name);
-      ResultSet r = s.executeQuery();
-
-      if (r.next()) {
-        id = r.getLong("uid");
-      } else {
-        id = 0;
-      }
-      
-      return id;
-
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
     }
   }
-  
+
   public void addMention(long uid, long mentioned)
   {
     if (c == null) { throw new IllegalStateException(); }

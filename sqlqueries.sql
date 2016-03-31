@@ -87,6 +87,15 @@ SELECT COUNT(*) FROM
 Status
 WHERE Status.author IN (SELECT DISTINCT user FROM Mention);
 
-SELECT a.*, b.*
-FROM Mentions AS a INNER JOIN Mentions AS b
-ON a.user = b.mentioned AND b.user = a.mentioned;
+-- Find all recpirocated mentions:
+
+SELECT DISTINCT a.user, a.mentioned, b.user, b.mentioned
+FROM Mention AS a INNER JOIN Mention AS b
+ON a.user = b.mentioned AND b.user = a.mentioned AND a.user != b.user;
+
+-- count all distinct recip. mentions:
+
+SELECT COUNT(*) FROM (
+SELECT DISTINCT a.user, a. mentioned, b.user, b.mentioned
+FROM Mention AS a INNER JOIN Mention AS b
+ON a.user = b.mentioned AND b.user = a.mentioned AND a.user != b.user);
