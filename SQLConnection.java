@@ -135,7 +135,7 @@ public class SQLConnection implements AutoCloseable
     }
   }
 
-  public List<DBStatus> getStatuses()
+  public List<DBStatus> getStatuses(long offset, long amount)
   {
     if (c == null) { throw new IllegalStateException(); }
 
@@ -143,7 +143,11 @@ public class SQLConnection implements AutoCloseable
 
     try (PreparedStatement s = c.prepareStatement(
          "SELECT text, uid, name FROM"
-         + " User INNER JOIN Status ON User.uid = Status.author")) {
+         + " User INNER JOIN Status ON User.uid = Status.author"
+         + " LIMIT ? , ?")) {
+
+     s.setLong(1, offset);
+     s.setLong(2, amount);
 
       ResultSet r = s.executeQuery();
       while (r.next()) {

@@ -65,7 +65,7 @@ WHERE author = User.uid;
 
 -- Return everything needed for a status object
 
-SELECT text, uid, name FROM 
+SELECT text, uid, name FROM
 User INNER JOIN Status ON User.uid = Status.author;
 
 -- count all distinct mentions
@@ -77,13 +77,13 @@ SELECT COUNT(*) FROM
 
 SELECT COUNT(*) FROM Mention;
 
--- coutn users by number of mentions 
+-- coutn users by number of mentions
 
 SELECT user, COUNT(mentioned) AS m FROM Mention GROUP BY user ORDER BY m ASC;
 
 -- Count all tweets authored by someone who has mentioned someone else in the db
 
-SELECT COUNT(*) FROM 
+SELECT COUNT(*) FROM
 Status
 WHERE Status.author IN (SELECT DISTINCT user FROM Mention);
 

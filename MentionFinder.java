@@ -22,8 +22,19 @@ class MentionFinder
 
   public void run()
   {
-    findMentions();
-    addMentions();
+    long offset = 0;
+    long amount = 100000;
+    long c = db.countStatuses();
+
+    while (offset <= c) {
+      statuses = db.getStatuses(offset, amount);
+      findMentions();
+      addMentions();
+      System.out.println("" + (amount + offset) +
+                         " statuses checked.");
+      offset += amount;
+    }
+
     printResults();
   }
 
@@ -31,11 +42,13 @@ class MentionFinder
   {
     db = new SQLConnection();
     db.open();
-    statuses = db.getStatuses();
-    users = db.getUsers();
     namesMentioned = new ArrayList<String>();
+    count = 0;
+    users = db.getUsers();
     uidLookup = new HashMap<String, Long>();
     populateLookup();
+
+    System.out.println("Loaded Userlist.");
   }
 
   // A map between usernames and uids, used to convert mentioned names
@@ -52,7 +65,6 @@ class MentionFinder
   // the 'mentions' field of the Status object.
   private void findMentions()
   {
-    count = 0;
     List<Long> mentions;
 
     for (DBStatus s: statuses) {
@@ -64,6 +76,7 @@ class MentionFinder
         count++;
       }
     }
+    System.out.println("Mentions found.");
   }
 
   // Extracts any mentioned usernames and converts them to uids.
