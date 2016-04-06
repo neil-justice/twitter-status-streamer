@@ -9,7 +9,7 @@ class MentionFinder
   private SQLConnection db;
   private List<DBStatus> statuses;
   private List<DBUser> users;
-  private List<String> namesMentioned;
+  private List<DBMention> mentions;
   private Map<String, Long> uidLookup;
   private char c = '@';
   private int count;
@@ -20,37 +20,41 @@ class MentionFinder
     m.run();
   }
 
-  public void run()
-  {
-    long offset = 0;
-    long amount = 100000;
-    long c = db.countStatuses();
-
-    while (offset <= c) {
-      statuses = db.getStatuses(offset, amount);
-      findMentions();
-      addMentions();
-      System.out.println("" + (amount + offset) +
-                         " statuses checked.");
-      offset += amount;
-    }
-
-    printResults();
-  }
-
   public MentionFinder()
   {
     db = new SQLConnection();
     db.open();
-    namesMentioned = new ArrayList<String>();
     count = 0;
     users = db.getUsers();
+    mentions = new ArrayList<DBMention>();
     uidLookup = new HashMap<String, Long>();
     populateLookup();
 
     System.out.println("Loaded Userlist.");
   }
 
+  public void run()
+  {
+    long offset = 0;
+    long amount = 100000;
+    long statusNum = db.countStatuses();
+
+    while (offset <= statusNum) {
+      statuses = db.getStatuses(offset, amount);
+      System.out.println("" + amount + " statuses loaded.");
+      
+      findMentions();
+      System.out.println("Mentions found and converted to uids.");
+      
+      addMentions();
+      System.out.println("Mentions added to db.");
+      System.out.println("" + (amount + offset) +
+                         " statuses checked so far.");
+                         
+      offset += amount;
+    }
+  }
+  
   // A map between usernames and uids, used to convert mentioned names
   // into uids.
   private void populateLookup()
@@ -65,55 +69,39 @@ class MentionFinder
   // the 'mentions' field of the Status object.
   private void findMentions()
   {
-    List<Long> mentions;
-
     for (DBStatus s: statuses) {
       if (s.text().contains("" + c)) {
-        mentions = findMentionedUsers(s.text());
-        for (long l: mentions) {
-          s.addMention(l);
-        }
+        findMentionedUsers(s.text(), s.uid());
         count++;
       }
     }
-    System.out.println("Mentions found.");
+    statuses.clear();
   }
 
   // Extracts any mentioned usernames and converts them to uids.
-  private List<Long> findMentionedUsers(String s)
+  private void findMentionedUsers(String text, Long uid)
   {
-    String[] words = s.split(" ");
-    List<Long> mentions = new ArrayList<Long>();
+    String[] words = text.split(" ");
 
-    for (String w: words) {
-      if (w.startsWith("@")) {
-        String name = w.replaceAll("[^a-zA-Z0-9_]", "");
-        namesMentioned.add(name);
+    for (String word: words) {
+      if (word.startsWith("@")) {
+        String name = word.replaceAll("[^a-zA-Z0-9_]", "");
         Long l = uidLookup.get(name);
         if (l != null) {
-          mentions.add(l);
+          mentions.add(new DBMention(uid, l));
         }
       }
     }
-    return mentions;
   }
 
   // Adds all mentions found to the Mentions table in the db. each
   // mention has an id, a user, and a user mentioned field.
   private void addMentions()
   {
-    for (DBStatus s: statuses) {
-      for (long l: s.mentions()) {
-        db.addMention(s.uid(), l);
-      }
+    for (DBMention m: mentions) {
+      db.addMention(m.uid(), m.mentioned());
     }
     db.commit();
-  }
-
-  private void printResults()
-  {
-    System.out.println("Total number of tweets: " + db.countStatuses());
-    System.out.println("Number containing mentions: " + count);
-    System.out.println("Number of discrete mentions: " + namesMentioned.size());
+    mentions.clear();
   }
 }
