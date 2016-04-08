@@ -8,7 +8,6 @@ class MentionFinder
 {
   private SQLConnection db;
   private List<DBStatus> statuses;
-  private List<DBUser> users;
   private List<DBMention> mentions;
   private Map<String, Long> uidLookup;
   private char c = '@';
@@ -25,7 +24,7 @@ class MentionFinder
     db = new SQLConnection();
     db.open();
     count = 0;
-    users = db.getUsers();
+    
     mentions = new ArrayList<DBMention>();
     uidLookup = new HashMap<String, Long>();
     populateLookup();
@@ -33,6 +32,10 @@ class MentionFinder
     System.out.println("Loaded Userlist.");
   }
 
+  // due to memory limitations not all statuses can be loaded from SQLite at
+  // once.  They are loaded in chunks to the List statuses.  Once the mentions
+  // have been found the statuses List is cleared, and once the mentions
+  // are added to the db the mentions List is cleared.
   public void run()
   {
     long offset = 0;
@@ -44,9 +47,11 @@ class MentionFinder
       System.out.println("" + amount + " statuses loaded.");
       
       findMentions();
+      statuses.clear();      
       System.out.println("Mentions found and converted to uids.");
       
       addMentions();
+      mentions.clear();      
       System.out.println("Mentions added to db.");
       System.out.println("" + (amount + offset) +
                          " statuses checked so far.");
@@ -59,9 +64,13 @@ class MentionFinder
   // into uids.
   private void populateLookup()
   {
+    List<DBUser> users = db.getUsers();
+    
     for (DBUser u: users) {
       uidLookup.put(u.username(), u.uid());
     }
+    
+    users.clear();
   }
 
   // Extracts all the usernames mentioned (preceded by an '@')
@@ -75,7 +84,6 @@ class MentionFinder
         count++;
       }
     }
-    statuses.clear();
   }
 
   // Extracts any mentioned usernames and converts them to uids.
@@ -102,6 +110,5 @@ class MentionFinder
       db.addMention(m.uid(), m.mentioned());
     }
     db.commit();
-    mentions.clear();
   }
 }

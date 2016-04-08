@@ -89,7 +89,7 @@ WHERE Status.author IN (SELECT DISTINCT user FROM Mention);
 
 -- Find all recpirocated mentions:
 
-SELECT DISTINCT a.user, a.mentioned, b.user, b.mentioned
+SELECT DISTINCT a.user, a.mentioned
 FROM Mention AS a INNER JOIN Mention AS b
 ON a.user = b.mentioned AND b.user = a.mentioned AND a.user != b.user;
 
