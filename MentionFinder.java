@@ -41,24 +41,23 @@ class MentionFinder
   {
     long offset = 0;
     long amount = 500000;
-    long statusNum = db.countStatuses();
 
-    while (offset <= statusNum) {
+    do {
+      statuses.clear();      
       statuses = db.getStatuses(offset, amount);
       System.out.println("" + amount + " statuses loaded.");
       
       findMentions();
-      statuses.clear();      
       System.out.println("Mentions found and converted to uids.");
       
       addMentions();
       mentions.clear();      
-      System.out.println("Mentions added to db.");
+      System.out.print("Mentions added to db.  ");
       System.out.println("" + (amount + offset) +
                          " statuses checked so far.");
                          
       offset += amount;
-    }
+    } while (statuses.size() > 0);
   }
   
   // A map between usernames and uids, used to convert mentioned names
