@@ -23,6 +23,7 @@ class MentionFinder
   {
     db = new SQLConnection();
     db.open();
+    db.setCacheSize(524288);
     count = 0;
     
     mentions = new ArrayList<DBMention>();
@@ -39,7 +40,7 @@ class MentionFinder
   public void run()
   {
     long offset = 0;
-    long amount = 100000;
+    long amount = 1000000;
     long statusNum = db.countStatuses();
 
     while (offset <= statusNum) {
@@ -106,9 +107,7 @@ class MentionFinder
   // mention has an id, a user, and a user mentioned field.
   private void addMentions()
   {
-    for (DBMention m: mentions) {
-      db.addMention(m.uid(), m.mentioned());
-    }
+    db.addMentions(mentions);
     db.commit();
   }
 }

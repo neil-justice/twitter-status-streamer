@@ -62,7 +62,7 @@ public class SQLConnection implements AutoCloseable
 
     try ( PreparedStatement s = c.prepareStatement(
          "INSERT INTO Status " +
-         "VALUES( ?, ?, ?, ? )")) {
+         "VALUES( ?, ?, ?, ? );")) {
 
       s.setLong(1, id);
       s.setString(2, text);
@@ -81,7 +81,7 @@ public class SQLConnection implements AutoCloseable
 
     try ( PreparedStatement s = c.prepareStatement(
          "INSERT INTO User " +
-         "VALUES( ?, ?, ?, ? )")) {
+         "VALUES( ?, ?, ?, ? );")) {
 
       s.setLong(1, id);
       s.setString(2, name);
@@ -101,7 +101,7 @@ public class SQLConnection implements AutoCloseable
     int count = 0;
 
     try ( PreparedStatement s = c.prepareStatement(
-         "SELECT COUNT(*) FROM Status")) {
+         "SELECT COUNT(*) FROM Status;")) {
 
       ResultSet r = s.executeQuery();
       count = r.getInt(1);
@@ -120,16 +120,15 @@ public class SQLConnection implements AutoCloseable
 
     List<DBUser> list = new ArrayList<DBUser>();
 
-    try (PreparedStatement s = c.prepareStatement(
-         "SELECT uid, name FROM User")) {
-
-      ResultSet r = s.executeQuery();
-      while (r.next()) {
-        DBUser u = new DBUser(r.getLong("uid"), r.getString("name"));
-        list.add(u);
+    try (PreparedStatement s = c.prepareStatement(" SELECT uid, name" 
+                                                + " FROM User;")) {
+      try (ResultSet r = s.executeQuery()) {
+        while (r.next()) {
+          DBUser u = new DBUser(r.getLong("uid"), r.getString("name"));
+          list.add(u);
+        }
+        return list;        
       }
-      return list;
-
     } catch (SQLException e) {
         throw new RuntimeException(e);
     }
@@ -141,42 +140,47 @@ public class SQLConnection implements AutoCloseable
 
     List<DBStatus> list = new ArrayList<DBStatus>();
 
-    try (PreparedStatement s = c.prepareStatement(
-         "SELECT text, uid, name FROM"
-         + " User INNER JOIN Status ON User.uid = Status.author"
-         + " LIMIT ? , ?")) {
-
-     s.setLong(1, offset);
-     s.setLong(2, amount);
-
-      ResultSet r = s.executeQuery();
-      while (r.next()) {
-        DBStatus st = new DBStatus(
-          r.getString("text"),
-          r.getLong("uid"),
-          r.getString("name"));
-        list.add(st);
+    try (PreparedStatement s = c.prepareStatement( "SELECT text, uid FROM " +
+                                                   "Status LIMIT ? , ? ;")) {
+      s.setLong(1, offset);
+      s.setLong(2, amount);
+      try (ResultSet r = s.executeQuery()) {
+        while (r.next()) {
+          DBStatus st = new DBStatus(r.getString("text"), r.getLong("uid"));
+          list.add(st);
+        }
+        return list;        
       }
-      return list;
-
     } catch (SQLException e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException();
     }
   }
 
-  public void addMention(long uid, long mentioned)
+  public void addMentions(List<DBMention> mentions)
   {
     if (c == null) { throw new IllegalStateException(); }
 
-    try ( PreparedStatement s = c.prepareStatement(
-         "INSERT INTO Mention " +
-         "VALUES( null, ?, ? )")) {
-
-      s.setLong(1, uid);
-      s.setLong(2, mentioned);
-
-      s.execute();
+    try (PreparedStatement s = c.prepareStatement("INSERT INTO Mention " +
+                                                  "VALUES( null, ?, ? );")) {
+      for (int i = 0; i < mentions.size(); i++) {
+        s.setLong(1, mentions.get(i).uid());
+        s.setLong(2, mentions.get(i).mentioned());
+        s.addBatch();
+        if ( i > 0 && i % 1000 == 0) {
+          int[] res = s.executeBatch();
+        }
+      }
+      
     } catch (SQLException e) {
+      System.out.println(e.getMessage());
+    }
+  }
+  
+  public void setCacheSize(int pages) {
+    try {
+      c.prepareStatement("PRAGMA cache_size=" + pages + ";").executeUpdate();
+    }
+    catch (SQLException e) {
       System.out.println(e.getMessage());
     }
   }
