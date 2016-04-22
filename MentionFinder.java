@@ -40,7 +40,7 @@ class MentionFinder
   public void run()
   {
     long offset = 0;
-    long amount = 1000000;
+    long amount = 500000;
     long statusNum = db.countStatuses();
 
     while (offset <= statusNum) {

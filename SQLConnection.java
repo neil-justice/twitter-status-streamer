@@ -140,13 +140,13 @@ public class SQLConnection implements AutoCloseable
 
     List<DBStatus> list = new ArrayList<DBStatus>();
 
-    try (PreparedStatement s = c.prepareStatement( "SELECT text, uid FROM " +
+    try (PreparedStatement s = c.prepareStatement( "SELECT text, author FROM " +
                                                    "Status LIMIT ? , ? ;")) {
       s.setLong(1, offset);
       s.setLong(2, amount);
       try (ResultSet r = s.executeQuery()) {
         while (r.next()) {
-          DBStatus st = new DBStatus(r.getString("text"), r.getLong("uid"));
+          DBStatus st = new DBStatus(r.getString("text"), r.getLong("author"));
           list.add(st);
         }
         return list;        
