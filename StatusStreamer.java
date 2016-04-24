@@ -59,8 +59,9 @@ class StatusStreamer implements Runnable
     twitterStream.addListener(l);
     twitterStream.addConnectionLifeCycleListener(lcl);
 
-    FilterQuery q = setFilter();
-    twitterStream.filter(q);
+    // FilterQuery q = setFilter();
+    // twitterStream.filter(q);
+    twitterStream.sample("en");
   }
   
   public void close()

@@ -55,9 +55,8 @@ class Listener implements StatusListener
   @Override
   public void onTrackLimitationNotice(int numberOfLimitedStatuses)
   {
-    System.out.println("Warning: "
-                       + numberOfLimitedStatuses
-                       + " statuses missed from stream.");
+    System.out.println("Warning: " + numberOfLimitedStatuses + 
+                       " statuses missed from stream.");
   }
 
   @Override

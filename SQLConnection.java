@@ -7,7 +7,7 @@ import java.util.*;
 
 public class SQLConnection implements AutoCloseable
 {
-  static final String CONNECTION = "jdbc:sqlite:statuses.db";
+  static final String CONNECTION = "jdbc:sqlite:sample.db";
   private Connection c;
   private int nonUnique = 0;
 
