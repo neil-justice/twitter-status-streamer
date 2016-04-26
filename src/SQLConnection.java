@@ -7,7 +7,7 @@ import java.util.*;
 
 public class SQLConnection implements AutoCloseable
 {
-  static final String CONNECTION = "jdbc:sqlite:sample.db";
+  static final String CONNECTION = "jdbc:sqlite:statuses.db";
   private Connection c;
   private int nonUnique = 0;
 
@@ -120,14 +120,14 @@ public class SQLConnection implements AutoCloseable
 
     List<DBUser> list = new ArrayList<DBUser>();
 
-    try (PreparedStatement s = c.prepareStatement(" SELECT uid, name" 
+    try (PreparedStatement s = c.prepareStatement(" SELECT uid, name"
                                                 + " FROM User;")) {
       try (ResultSet r = s.executeQuery()) {
         while (r.next()) {
           DBUser u = new DBUser(r.getLong("uid"), r.getString("name"));
           list.add(u);
         }
-        return list;        
+        return list;
       }
     } catch (SQLException e) {
         throw new RuntimeException(e);
@@ -149,7 +149,7 @@ public class SQLConnection implements AutoCloseable
           DBStatus st = new DBStatus(r.getString("text"), r.getLong("author"));
           list.add(st);
         }
-        return list;        
+        return list;
       }
     } catch (SQLException e) {
       throw new RuntimeException();
@@ -170,12 +170,12 @@ public class SQLConnection implements AutoCloseable
           int[] res = s.executeBatch();
         }
       }
-      
+
     } catch (SQLException e) {
       System.out.println(e.getMessage());
     }
   }
-  
+
   public void setCacheSize(int pages) {
     try {
       c.prepareStatement("PRAGMA cache_size=" + pages + ";").executeUpdate();

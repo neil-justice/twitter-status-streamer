@@ -28,7 +28,7 @@ class StatusStreamer implements Runnable
 			e.printStackTrace();
     }
   }
-  
+
   @Override
   public void run()
   {
@@ -52,21 +52,20 @@ class StatusStreamer implements Runnable
   }
 
   public void open()
-  { 
+  {
     Listener l = new Listener(db);
     LifeCycleListener lcl = new LifeCycleListener();
-    
+
     twitterStream.addListener(l);
     twitterStream.addConnectionLifeCycleListener(lcl);
 
-    // FilterQuery q = setFilter();
-    // twitterStream.filter(q);
-    twitterStream.sample("en");
+    FilterQuery q = setFilter();
+    twitterStream.filter(q);
   }
-  
+
   public void close()
   {
     twitterStream.cleanUp();
-    twitterStream.shutdown();  
+    twitterStream.shutdown();
   }
 }
