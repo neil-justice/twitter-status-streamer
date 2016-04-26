@@ -1,0 +1,11 @@
+stream.properties
+devlog.txt
+stream.json
+*.class
+Mongotest.java
+test/*
+bin/*
+csv/*
+*.csv
+*.db
+lib/mongo-java-driver-2.13.3.jar
